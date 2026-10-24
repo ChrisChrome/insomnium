@@ -19,23 +19,30 @@ jobs:
   build-and-upload-artifacts:
     # Skip jobs for release PRs
     if: ${{ !startsWith(github.head_ref, 'release/') }}
-    runs-on: ${{ matrix.os }}
+    # "runner" is separate from "os" so artifact names stay stable
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: "macos-latest"
+            runner: "macos-latest"
             build-targets: "zip"
+          # Pinned: windows-latest now maps to windows-2025-vs2026, where
+          # Electron 25's GPU process crashes (exit code -1073741819)
           - os: "windows-latest"
+            runner: "windows-2022"
             build-targets: "portable"
+          # Pinned: ubuntu-latest migrates to Ubuntu 26 on 2026-10-19
           - os: "ubuntu-latest"
+            runner: "ubuntu-24.04"
             build-targets: "tar.gz"
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: 'npm'
@@ -57,7 +64,10 @@ jobs:
         env:
           INSOMNIA_UPDATES_URL: http://localhost:4010
 
+      # if: always() so traces and built artifacts are still uploaded
+      # when the smoke test fails
       - name: Upload smoke test traces
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
@@ -65,6 +75,7 @@ jobs:
           path: packages/insomnia-smoke-test/traces
 
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
