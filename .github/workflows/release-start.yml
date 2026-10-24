@@ -72,7 +72,7 @@ jobs:
 
       - name: Configure Git user
         id: configure_git_user
-        uses: Homebrew/actions/git-user-config@master
+        uses: Homebrew/actions/git-user-config@main
         with:
           username: ${{ (github.event_name == 'workflow_dispatch' && github.actor) || 'insomnia-infra' }}
 
